@@ -56,6 +56,6 @@ unsigned char* load_bmp(char *file_name, int *sourceWidth, int *sourceHeight);
 int save_bmp(char *file_name, unsigned char *buffer, int width, int height);
 unsigned char* crop(unsigned char* srcBuffer, int srcWidth, int srcHeight, int startX, int startY, int cropWidth, int cropHeight);
 unsigned char* rotate(unsigned char* srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer);
-unsigned char* read_line(unsigned char* buffer, int width_buffer);
+unsigned char* read_column(unsigned char* buffer, int width_buffer, int column);
 
 #endif // BMP_H

@@ -193,7 +193,7 @@ unsigned char *rotate(unsigned char *srcCropBuffer, int cropWidthBuffer, int cro
   return destRatateBuffer;
 }
 
-unsigned char *read_line(unsigned char *buffer, int width_buffer)
+unsigned char *read_column(unsigned char *buffer, int width_buffer, int column)
 {
   int destWidthByte = (width_buffer * 3 + 3) & (~3);
   unsigned char* tmp_src_line = (unsigned char*)malloc(destWidthByte);

@@ -2,6 +2,130 @@
 
 #include "bmp.h"
 
+int main()
+{
+  char *in_file_name = "960px-Lenna.bmp";
+  char *out_file_name = "croup_lenna.bmp";
+  int cropX = 70;
+  int cropY = 70;
+  int cropW = 480;
+  int cropH = 480;
+  int srcWidth, srcHeight;
+
+  unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);
+
+  unsigned char* croppedBuffer = crop(pixel_data, srcWidth, srcHeight, cropX, cropY, cropW, cropH);
+  unsigned char* rotateBuffer = rotate(croppedBuffer, cropW, cropH);
+
+  save_bmp(out_file_name, rotateBuffer, cropW, cropH);
+
+  free(pixel_data);
+  free(croppedBuffer);
+  free(rotateBuffer);
+
+
+
+  //***************************************************************
+  // РАБОТАЮЩИЙ КОД
+  // FILE* source_file_bmp;
+
+  // BITMAPFILEHEADER fileHeader;
+  // BITMAPINFOHEADER infoHeader;
+
+  // if((source_file_bmp = fopen("960px-Lenna.bmp","rb")) == NULL)
+  //   return -1;
+
+  // // Чтение заголовка файла
+  //   if (fread(&fileHeader, sizeof(BITMAPFILEHEADER), 1, source_file_bmp) != 1) {
+  //       perror("Ошибка чтения BITMAPFILEHEADER");
+  //       fclose(source_file_bmp);
+  //       return 0;
+  //   }
+
+  // printf("bfSize: %d\n", fileHeader.bfSize);
+  // printf("bfOffBits: %d\n", fileHeader.bfOffBits);
+
+  //   // Проверка сигнатуры 'BM' (в little-endian это 0x4D42)
+  //   if (fileHeader.bfType != 0x4D42) {
+  //       fprintf(stderr, "Файл не является BMP-изображением.\n");
+  //       fclose(source_file_bmp);
+  //       return 0;
+  //   }
+
+  //   // Чтение информационного заголовка
+  //   if (fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, source_file_bmp) != 1) {
+  //       perror("Ошибка чтения BITMAPINFOHEADER");
+  //       fclose(source_file_bmp);
+  //       return 0;
+  //   }
+
+  //   printf("Смещение до данных изображения: %d\n", fileHeader.bfOffBits);
+  //   // Вывод базовой информации
+  //   printf("Ширина: %d, Высота: %d\n", infoHeader.biWidth, infoHeader.biHeight);
+  //   printf("Глубина цвета (бит/пиксель): %d\n", infoHeader.biBitCount);
+
+  //   // Определяем размер изображения
+  //   // Обычно это ширина * высота * количество каналов
+  //   int width = infoHeader.biWidth;
+  //   int height = infoHeader.biHeight;
+  //   int num_bytes = width * height * 3; // 3 для RGB
+
+  //   unsigned char *pixel_data = (unsigned char *)malloc(num_bytes);
+
+  // if (pixel_data == NULL) {
+  //   // Обработка ошибки
+  //   fclose(source_file_bmp);
+  //   return -1;
+  // }
+
+  // // Установка указателя файла на начало данных пикселей
+  // fseek(source_file_bmp, fileHeader.bfOffBits, SEEK_SET);
+
+  // // читаем в буфер
+  // fread(pixel_data, sizeof(unsigned char), num_bytes, source_file_bmp);
+
+
+  //   int cropX = 70;
+  //   int cropY = 70;
+  //   int cropW = 400;
+  //   int cropH = 400;
+
+  //   int destW, destH;
+  //   unsigned char* croppedBuffer = crop_buffer_roi(
+  //       pixel_data, width, height,
+  //       cropX, cropY, cropW, cropH,
+  //       &destW, &destH
+  //   );
+
+  // flip_buffer_horizontal(croppedBuffer, cropW, cropH);
+
+  // //flip_buffer_vertical(croppedBuffer, cropW, cropH); неработит
+
+  // if (save_buffer_to_bmp("output_crop.bmp", croppedBuffer, cropW, cropH) == 0) {
+  //       printf("Создан файл output_crop.bmp\n");
+  //   }
+
+  //  free(croppedBuffer);
+
+  // if (save_buffer_to_bmp("output.bmp", pixel_data, width, height) == 0) {
+  //       printf("Создан файл output.bmp\n");
+  //   }
+
+  // fclose(source_file_bmp);
+
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
 // int save_buffer_to_bmp(const char* filename, unsigned char* buffer, int width, int height)
 // {
 //     FILE* file = fopen(filename, "wb"); // Открываем файл в бинарном режиме для записи
@@ -192,133 +316,6 @@
 //     free(tempRow);
 //     printf("Изображение перевернуто по вертикали.\n");
 // }
-
-
-int main()
-{
-  char *in_file_name = "960px-Lenna.bmp";
-  char *out_file_name = "croup_lenna.bmp";
-  int cropX = 70;
-  int cropY = 70;
-  int cropW = 480;
-  int cropH = 480;
-  int srcWidth, srcHeight;
-
-  unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);
-
-  unsigned char* croppedBuffer = crop(pixel_data, srcWidth, srcHeight, cropX, cropY, cropW, cropH);
-  unsigned char* rotateBuffer = rotate(croppedBuffer, cropW, cropH);
-
-  save_bmp(out_file_name, rotateBuffer, cropW, cropH);
-
-  free(pixel_data);
-  free(croppedBuffer);
-  free(rotateBuffer);
-
-
-
-  //***************************************************************
-  // РАБОТАЮЩИЙ КОД
-  // FILE* source_file_bmp;
-
-  // BITMAPFILEHEADER fileHeader;
-  // BITMAPINFOHEADER infoHeader;
-
-  // if((source_file_bmp = fopen("960px-Lenna.bmp","rb")) == NULL)
-  //   return -1;
-
-  // // Чтение заголовка файла
-  //   if (fread(&fileHeader, sizeof(BITMAPFILEHEADER), 1, source_file_bmp) != 1) {
-  //       perror("Ошибка чтения BITMAPFILEHEADER");
-  //       fclose(source_file_bmp);
-  //       return 0;
-  //   }
-
-  // printf("bfSize: %d\n", fileHeader.bfSize);
-  // printf("bfOffBits: %d\n", fileHeader.bfOffBits);
-
-  //   // Проверка сигнатуры 'BM' (в little-endian это 0x4D42)
-  //   if (fileHeader.bfType != 0x4D42) {
-  //       fprintf(stderr, "Файл не является BMP-изображением.\n");
-  //       fclose(source_file_bmp);
-  //       return 0;
-  //   }
-
-  //   // Чтение информационного заголовка
-  //   if (fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, source_file_bmp) != 1) {
-  //       perror("Ошибка чтения BITMAPINFOHEADER");
-  //       fclose(source_file_bmp);
-  //       return 0;
-  //   }
-
-  //   printf("Смещение до данных изображения: %d\n", fileHeader.bfOffBits);
-  //   // Вывод базовой информации
-  //   printf("Ширина: %d, Высота: %d\n", infoHeader.biWidth, infoHeader.biHeight);
-  //   printf("Глубина цвета (бит/пиксель): %d\n", infoHeader.biBitCount);
-
-  //   // Определяем размер изображения
-  //   // Обычно это ширина * высота * количество каналов
-  //   int width = infoHeader.biWidth;
-  //   int height = infoHeader.biHeight;
-  //   int num_bytes = width * height * 3; // 3 для RGB
-
-  //   unsigned char *pixel_data = (unsigned char *)malloc(num_bytes);
-
-  // if (pixel_data == NULL) {
-  //   // Обработка ошибки
-  //   fclose(source_file_bmp);
-  //   return -1;
-  // }
-
-  // // Установка указателя файла на начало данных пикселей
-  // fseek(source_file_bmp, fileHeader.bfOffBits, SEEK_SET);
-
-  // // читаем в буфер
-  // fread(pixel_data, sizeof(unsigned char), num_bytes, source_file_bmp);
-
-
-  //   int cropX = 70;
-  //   int cropY = 70;
-  //   int cropW = 400;
-  //   int cropH = 400;
-
-  //   int destW, destH;
-  //   unsigned char* croppedBuffer = crop_buffer_roi(
-  //       pixel_data, width, height,
-  //       cropX, cropY, cropW, cropH,
-  //       &destW, &destH
-  //   );
-
-  // flip_buffer_horizontal(croppedBuffer, cropW, cropH);
-
-  // //flip_buffer_vertical(croppedBuffer, cropW, cropH); неработит
-
-  // if (save_buffer_to_bmp("output_crop.bmp", croppedBuffer, cropW, cropH) == 0) {
-  //       printf("Создан файл output_crop.bmp\n");
-  //   }
-
-  //  free(croppedBuffer);
-
-  // if (save_buffer_to_bmp("output.bmp", pixel_data, width, height) == 0) {
-  //       printf("Создан файл output.bmp\n");
-  //   }
-
-  // fclose(source_file_bmp);
-
-  return 0;
-}
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -201,17 +201,19 @@ int main()
   int cropX = 70;
   int cropY = 70;
   int cropW = 480;
-  int cropH = 680;
+  int cropH = 480;
   int srcWidth, srcHeight;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);
 
   unsigned char* croppedBuffer = crop(pixel_data, srcWidth, srcHeight, cropX, cropY, cropW, cropH);
+  unsigned char* rotateBuffer = rotate(croppedBuffer, cropW, cropH);
 
-  save_bmp(out_file_name, croppedBuffer, cropW, cropH);
+  save_bmp(out_file_name, rotateBuffer, cropW, cropH);
 
   free(pixel_data);
   free(croppedBuffer);
+  free(rotateBuffer);
 
 
 

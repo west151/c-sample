@@ -169,12 +169,36 @@ unsigned char* crop(unsigned char* srcBuffer, int srcWidth, int srcHeight, int s
 
 unsigned char *rotate(unsigned char *srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer)
 {
-  int srcStride = (cropWidthBuffer * 3 + 3) & (~3);
-  int destStride = (cropHeightBuffer * 3 + 3) & (~3);
-  uint32_t destImageSize = destStride * abs(cropHeightBuffer);
+  int destHeightByte = (cropWidthBuffer * 3 + 3) & (~3); // высота в новой картинке (ширина в старой) байт
+  int destWidthByte = (cropHeightBuffer * 3 + 3) & (~3); // ширина в новой картинке (высота в старой) байт
+  uint32_t destImageSize = destWidthByte * destHeightByte;
 
   // Выделяем память под новый буфер
   unsigned char* destRatateBuffer = (unsigned char*)malloc(destImageSize);
 
+  // временно выделить память для "строки" байт
+  //unsigned char* tmp_src_line = (unsigned char*)malloc(destWidthByte);
+
+  for (int q = cropWidthBuffer; q < 0; --q)
+  {
+
+    //memcpy(destRatateBuffer + q, tmp_src_line, destWidthByte);
+  }
+
+
+
+
+  //free(tmp_src_line);
+
   return destRatateBuffer;
+}
+
+unsigned char *read_line(unsigned char *buffer, int width_buffer)
+{
+  int destWidthByte = (width_buffer * 3 + 3) & (~3);
+  unsigned char* tmp_src_line = (unsigned char*)malloc(destWidthByte);
+  for (int i = 0; i < destWidthByte; i +=3 )
+    memcpy(tmp_src_line + i, buffer + i, 3);
+
+  return tmp_src_line;
 }

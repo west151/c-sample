@@ -27,20 +27,7 @@ typedef struct {
     uint32_t biClrImportant;
 } BITMAPINFOHEADER;
 
-// struct BITMAPINFOHEADER
-// {
-//     DWORD Size; // Число байтов необходимое для структуры = 40
-//     DWORD Width; // Ширина точечного рисунка в пикселях
-//     DWORD Height; // Высота точечного рисунка в пикселях
-//     WORD Planes; // Число плоскостей целевого устройства = 1
-//     WORD BitCount; // Глубина цвета, число бит на точку = 0,1,4,8,16,24,32
-//     DWORD Compression; // Тип сжатия = 0 для несжатого изображения
-//     DWORD SizeImage; // Размер изображения в байтах BitCount*Height*Width
-//     DWORD XPelsPerMeter; // Разрешающая способность по горизонтали
-//     DWORD YPelsPerMeter; // Разрешающая способность по вертикали
-//     DWORD ColorUsed; // Число индексов используемых цветов. Если все цвета = 0
-//     DWORD ColorImportant; // Число необходимых цветов = 0
-// };
+#pragma pack(pop)
 
 // Структура для хранения одного пикселя (BGR порядок)
 typedef struct {
@@ -49,15 +36,13 @@ typedef struct {
     uint8_t red;
 } PIXEL;
 
-#pragma pack(pop)
-
 unsigned char* load_bmp(char *file_name, int *sourceWidth, int *sourceHeight);
 int save_bmp(char *file_name, unsigned char *buffer, int width, int height);
 unsigned char* crop(unsigned char* srcBuffer, int srcWidth, int srcHeight, int startX, int startY, int cropWidth, int cropHeight);
-unsigned char* rotate(unsigned char* srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer);
-unsigned char* read_column(unsigned char* buffer, uint32_t imageSize, int width_buffer, int height_buffer, int column);
-void flip_buffer_horizontal(unsigned char* buffer, int width, int height);
-void flip_buffer_vertical(unsigned char* buffer, int width, int height);
+unsigned char* rotate(unsigned char* srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer); // , int *crop_new_width, int *crop_new_height
 void rotate_pixels(PIXEL *src_data, PIXEL *dst_data, int rows, int cols);
+
+// void flip_buffer_horizontal(unsigned char* buffer, int width, int height);
+// void flip_buffer_vertical(unsigned char* buffer, int width, int height);
 
 #endif // BMP_H

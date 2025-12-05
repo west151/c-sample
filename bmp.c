@@ -169,108 +169,18 @@ unsigned char* crop(unsigned char* srcBuffer, int srcWidth, int srcHeight, int s
 
 unsigned char *rotate(unsigned char *srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer)
 {
-  int destHeightByte = (cropWidthBuffer * 3 + 3) & (~3); // высота в новой картинке (ширина в старой) байт
-  int destWidthByte = (cropHeightBuffer * 3 + 3) & (~3); // ширина в новой картинке (высота в старой) байт
-  uint32_t destImageSize = destWidthByte * destHeightByte;
+  PIXEL* pixel_array = (PIXEL*)srcCropBuffer;
 
-  // Выделяем память под новый буфер
-  unsigned char* destRatateBuffer = (unsigned char*)malloc(destImageSize);
+  int new_width = cropHeightBuffer; // Ширина и высота меняются местами
+  int new_height = cropWidthBuffer;
+  PIXEL *dst_data = malloc((new_width * new_height + new_height) * sizeof(PIXEL));
 
-  int shift = 0;
-  for(int i = cropWidthBuffer; i > 0; --i)
-  {
-    unsigned char* tmp_src_line = read_column(srcCropBuffer, destImageSize, cropWidthBuffer, cropHeightBuffer, i);
-    memcpy(destRatateBuffer + shift, tmp_src_line, destWidthByte);
-    shift = shift + destWidthByte;
-  }
-  return destRatateBuffer;
-}
+  // int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
+  // PIXEL *dst_data = malloc((new_width * new_height + new_height * padding_out) * sizeof(PIXEL));
 
-unsigned char *read_column(unsigned char *buffer, uint32_t imageSize, int width_buffer, int height_buffer, int column)
-{
-  int destWidthByte1 = (width_buffer * 3);
-  int destHeightByte1 = (height_buffer * 3);
-  int destColumnByte1 = (column * 3) - 3;
+  rotate_pixels(pixel_array, dst_data, cropHeightBuffer, cropWidthBuffer); // Передаем height как rows, width как cols
 
-  printf("size buffer: %d\n", imageSize);
-  printf("column: %d\n", column);
-  printf("destColumnByte1: %d\n", destColumnByte1);
-  // printf("destColumnByte: %d\n", destColumnByte);
-  // printf("width_buffer: %d\n", width_buffer);
-  // printf("height_buffer: %d\n", height_buffer);
-  // printf("destWidthByte1: %d\n", destWidthByte1);
-  // printf("***********************\n");
-
-  unsigned char* tmp_src_line = (unsigned char*)malloc(destWidthByte1);
-
-  // нужно прочитать
-  // for(int i1 = destColumnByte1; i1 < imageSize; i1 = i1 + destColumnByte1 )
-  // {
-  //   printf("column: %d,destColumnByte: %d, i: %d\n", column, destColumnByte1, i1);
-  // }
-
-  // for (int i = destColumnByte; i < imageSize; i += destColumnByte ) {
-  // printf("destColumnByte, %d , i: %d\n", destColumnByte, i);
-  // //   memcpy(tmp_src_line + i, destColumnByte + buffer + i, 3);
-  // }
-
-  printf("***********************\n");
-
-  return tmp_src_line;
-}
-
-void flip_buffer_horizontal(unsigned char* buffer, int width, int height)
-{
-    int stride = (width * 3 + 3) & (~3);
-    int absHeight = abs(height);
-    int bytesPerPixel = 3;
-
-    for (int i = 0; i < absHeight; i++) {
-        unsigned char* currentRow = buffer + i * stride;
-
-        // Итерируемся только до середины строки (width / 2 пикселей)
-        for (int j = 0; j < width / 2; j++) {
-            // Определяем указатели на левый и правый пиксель
-            unsigned char* leftPixel = currentRow + j * bytesPerPixel;
-            unsigned char* rightPixel = currentRow + (width - 1 - j) * bytesPerPixel;
-
-            // Меняем местами 3 байта (BGR) для двух пикселей
-            unsigned char temp[3];
-            memcpy(temp, leftPixel, bytesPerPixel);
-            memcpy(leftPixel, rightPixel, bytesPerPixel);
-            memcpy(rightPixel, temp, bytesPerPixel);
-        }
-    }
-    printf("Изображение перевернуто по горизонтали.\n");
-}
-
-void flip_buffer_vertical(unsigned char* buffer, int width, int height) {
-    // Рассчитываем шаг строки (stride) с учетом выравнивания до 4 байт
-    int stride = (width * 3 + 3) & (~3);
-    int absHeight = abs(height); // Работаем с абсолютной высотой
-
-    // Выделяем временную память для хранения одной строки
-    unsigned char* tempRow = (unsigned char*)malloc(stride);
-    if ( tempRow == NULL) {
-        printf("Ошибка выделения памяти для временной строки (flip_buffer_vertical).\n");
-        return;
-    }
-
-    // Итерируемся только до середины изображения
-    for (int i = 0; i < absHeight / 2; i++) {
-        // Определяем смещение для верхней строки
-        unsigned char* topRow = buffer + i * stride;
-        // Определяем смещение для нижней строки
-        unsigned char* bottomRow = buffer + (absHeight - 1 - i) * stride;
-
-        // Меняем местами верхнюю и нижнюю строки через временный буфер
-        memcpy(tempRow, topRow, stride);
-        memcpy(topRow, bottomRow, stride);
-        memcpy(bottomRow, tempRow, stride);
-    }
-
-    free(tempRow);
-    printf("Изображение перевернуто по вертикали.\n");
+  unsigned char* result = (unsigned char*)dst_data;
 }
 
 void rotate_pixels(PIXEL *src_data, PIXEL *dst_data, int rows, int cols) {
@@ -288,3 +198,63 @@ void rotate_pixels(PIXEL *src_data, PIXEL *dst_data, int rows, int cols) {
         }
     }
 }
+
+
+
+
+
+
+
+// void flip_buffer_horizontal(unsigned char* buffer, int width, int height)
+// {
+//     int stride = (width * 3 + 3) & (~3);
+//     int absHeight = abs(height);
+//     int bytesPerPixel = 3;
+
+//     for (int i = 0; i < absHeight; i++) {
+//         unsigned char* currentRow = buffer + i * stride;
+
+//         // Итерируемся только до середины строки (width / 2 пикселей)
+//         for (int j = 0; j < width / 2; j++) {
+//             // Определяем указатели на левый и правый пиксель
+//             unsigned char* leftPixel = currentRow + j * bytesPerPixel;
+//             unsigned char* rightPixel = currentRow + (width - 1 - j) * bytesPerPixel;
+
+//             // Меняем местами 3 байта (BGR) для двух пикселей
+//             unsigned char temp[3];
+//             memcpy(temp, leftPixel, bytesPerPixel);
+//             memcpy(leftPixel, rightPixel, bytesPerPixel);
+//             memcpy(rightPixel, temp, bytesPerPixel);
+//         }
+//     }
+//     printf("Изображение перевернуто по горизонтали.\n");
+// }
+
+// void flip_buffer_vertical(unsigned char* buffer, int width, int height) {
+//     // Рассчитываем шаг строки (stride) с учетом выравнивания до 4 байт
+//     int stride = (width * 3 + 3) & (~3);
+//     int absHeight = abs(height); // Работаем с абсолютной высотой
+
+//     // Выделяем временную память для хранения одной строки
+//     unsigned char* tempRow = (unsigned char*)malloc(stride);
+//     if ( tempRow == NULL) {
+//         printf("Ошибка выделения памяти для временной строки (flip_buffer_vertical).\n");
+//         return;
+//     }
+
+//     // Итерируемся только до середины изображения
+//     for (int i = 0; i < absHeight / 2; i++) {
+//         // Определяем смещение для верхней строки
+//         unsigned char* topRow = buffer + i * stride;
+//         // Определяем смещение для нижней строки
+//         unsigned char* bottomRow = buffer + (absHeight - 1 - i) * stride;
+
+//         // Меняем местами верхнюю и нижнюю строки через временный буфер
+//         memcpy(tempRow, topRow, stride);
+//         memcpy(topRow, bottomRow, stride);
+//         memcpy(bottomRow, tempRow, stride);
+//     }
+
+//     free(tempRow);
+//     printf("Изображение перевернуто по вертикали.\n");
+// }

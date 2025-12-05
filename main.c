@@ -5,11 +5,12 @@
 int main()
 {
   char *in_file_name = "960px-Lenna.bmp";
+  //char *in_file_name = "960px-Lenna-vert.bmp";  // Ширина: 724, Высота: 960
   char *out_file_name = "croup_lenna.bmp";
   int cropX = 30;
   int cropY = 30;
-  int cropW = 400;
-  int cropH = 625;
+  int cropW = 440;
+  int cropH = 340; // 300 x 400 - работает
   int srcWidth, srcHeight;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);

@@ -173,11 +173,8 @@ unsigned char *rotate(unsigned char *srcCropBuffer, int cropWidthBuffer, int cro
 
   int new_width = cropHeightBuffer; // Ширина и высота меняются местами
   int new_height = cropWidthBuffer;
-  PIXEL *dst_data = malloc((new_width * new_height + new_height) * sizeof(PIXEL));
-
-  // int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
-  // PIXEL *dst_data = malloc((new_width * new_height + new_height * padding_out) * sizeof(PIXEL));
-
+  int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
+  PIXEL *dst_data = malloc((new_width * new_height + new_height * padding_out) * sizeof(PIXEL));
   rotate_pixels(pixel_array, dst_data, cropHeightBuffer, cropWidthBuffer); // Передаем height как rows, width как cols
 
   unsigned char* result = (unsigned char*)dst_data;

@@ -39,8 +39,10 @@ typedef struct {
 unsigned char* load_bmp(char *file_name, int *sourceWidth, int *sourceHeight);
 int save_bmp(char *file_name, unsigned char *buffer, int width, int height);
 unsigned char* crop(unsigned char* srcBuffer, int srcWidth, int srcHeight, int startX, int startY, int cropWidth, int cropHeight);
-unsigned char* rotate(unsigned char* srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer); // , int *crop_new_width, int *crop_new_height
+unsigned char* rotate(unsigned char* srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer);
 void rotate_pixels(PIXEL *src_data, PIXEL *dst_data, int rows, int cols);
+
+
 
 // void flip_buffer_horizontal(unsigned char* buffer, int width, int height);
 // void flip_buffer_vertical(unsigned char* buffer, int width, int height);

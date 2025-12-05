@@ -8,20 +8,31 @@ int main()
   char *out_file_name = "croup_lenna.bmp";
   int cropX = 70;
   int cropY = 70;
-  int cropW = 480;
-  int cropH = 480;
+  int cropW = 500;
+  int cropH = 500;
   int srcWidth, srcHeight;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);
 
   unsigned char* croppedBuffer = crop(pixel_data, srcWidth, srcHeight, cropX, cropY, cropW, cropH);
-  unsigned char* rotateBuffer = rotate(croppedBuffer, cropW, cropH);
 
-  save_bmp(out_file_name, rotateBuffer, cropW, cropH);
+  //flip_buffer_horizontal(croppedBuffer, cropW, cropH);
+  //flip_buffer_vertical(croppedBuffer, cropW, cropH);
+
+  //unsigned char* rotateBuffer = rotate(croppedBuffer, cropW, cropH);
+
+    // --- ПОВОРОТ ---
+    int new_width = cropH; // Ширина и высота меняются местами
+    int new_height = cropW;
+    int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
+    PIXEL *dst_data = malloc((new_width * new_height + new_height * padding_out) * sizeof(PIXEL));
+    rotate_pixels(croppedBuffer, dst_data, cropH, cropW); // Передаем height как rows, width как cols
+
+  save_bmp(out_file_name, croppedBuffer, cropW, cropH);
 
   free(pixel_data);
   free(croppedBuffer);
-  free(rotateBuffer);
+  //free(rotateBuffer);
 
 
 
@@ -117,6 +128,82 @@ int main()
 }
 
 
+
+
+
+
+
+
+// !!! ПРИМЕР КОНЦЕПТУАЛЬНЫЙ. УПРАВЛЕНИЕ ПАМЯТЬЮ И ДЕТАЛИ ВЫРАВНИВАНИЯ УПРОЩЕНЫ !!!
+
+// int main() {
+//     FILE *f_in = fopen("input.bmp", "rb");
+//     if (!f_in) return 1;
+
+//     BITMAPFILEHEADER fh;
+//     BITMAPINFOHEADER ih;
+
+//     // Чтение заголовков
+//     fread(&fh, sizeof(BITMAPFILEHEADER), 1, f_in);
+//     fread(&ih, sizeof(BITMAPINFOHEADER), 1, f_in);
+
+//     // Проверка, что это 24-битный BMP без сжатия
+//     if (fh.bfType != 0x4D42 || ih.biBitCount != 24 || ih.biCompression != 0) {
+//         printf("Поддерживается только 24-битный несжатый BMP.\\n");
+//         fclose(f_in);
+//         return 1;
+//     }
+
+//     int width = ih.biWidth;
+//     int height = ih.biHeight;
+//     // Вычисление padding: каждая строка должна быть кратна 4 байтам
+//     int padding_in = (4 - (width * sizeof(PIXEL)) % 4) % 4;
+
+//     // Выделение памяти под исходные данные изображения
+//     PIXEL *src_data = malloc((width * height + height * padding_in) * sizeof(PIXEL));
+//     fseek(f_in, fh.bOffBits, SEEK_SET);
+
+//     // Чтение данных построчно с учетом padding
+//     for (int i = 0; i < height; i++) {
+//         fread(&src_data[i * width], sizeof(PIXEL), width, f_in);
+//         fseek(f_in, padding_in, SEEK_CUR);
+//     }
+//     fclose(f_in);
+
+//     // --- ПОВОРОТ ---
+//     int new_width = height; // Ширина и высота меняются местами
+//     int new_height = width;
+//     int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
+//     PIXEL *dst_data = malloc((new_width * new_height + new_height * padding_out) * sizeof(PIXEL));
+//     rotate_pixels(src_data, dst_data, height, width); // Передаем height как rows, width как cols
+
+//     // --- ЗАПИСЬ ---
+//     FILE *f_out = fopen("output_rotated.bmp", "wb");
+//     if (!f_out) { free(src_data); free(dst_data); return 1; }
+
+//     // Обновление заголовков для нового файла
+//     ih.biWidth = new_width;
+//     ih.biHeight = new_height;
+//     ih.biSizeImage = (new_width * sizeof(PIXEL) + padding_out) * new_height;
+//     fh.bfileSize = ih.biSizeImage + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+//     // Запись новых заголовков
+//     fwrite(&fh, sizeof(BITMAPFILEHEADER), 1, f_out);
+//     fwrite(&ih, sizeof(BITMAPINFOHEADER), 1, f_out);
+
+//     // Запись данных с новым padding
+//     uint8_t pad_byte = 0x00;
+//     for (int i = 0; i < new_height; i++) {
+//         fwrite(&dst_data[i * new_width], sizeof(PIXEL), new_width, f_out);
+//         fwrite(&pad_byte, sizeof(uint8_t), padding_out, f_out);
+//     }
+
+//     fclose(f_out);
+//     free(src_data);
+//     free(dst_data);
+//     printf("Изображение успешно повернуто и сохранено в output_rotated.bmp\\n");
+//     return 0;
+// }
 
 
 

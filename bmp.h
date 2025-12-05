@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 
-#pragma pack(push)
-#pragma pack(1)
+#pragma pack(push, 1)
 
 typedef struct {
     uint16_t bfType;       // Сигнатура "BM"
@@ -48,7 +47,7 @@ typedef struct {
     uint8_t blue;
     uint8_t green;
     uint8_t red;
-} Pixel;
+} PIXEL;
 
 #pragma pack(pop)
 
@@ -56,6 +55,9 @@ unsigned char* load_bmp(char *file_name, int *sourceWidth, int *sourceHeight);
 int save_bmp(char *file_name, unsigned char *buffer, int width, int height);
 unsigned char* crop(unsigned char* srcBuffer, int srcWidth, int srcHeight, int startX, int startY, int cropWidth, int cropHeight);
 unsigned char* rotate(unsigned char* srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer);
-unsigned char* read_column(unsigned char* buffer, int width_buffer, int column);
+unsigned char* read_column(unsigned char* buffer, uint32_t imageSize, int width_buffer, int height_buffer, int column);
+void flip_buffer_horizontal(unsigned char* buffer, int width, int height);
+void flip_buffer_vertical(unsigned char* buffer, int width, int height);
+void rotate_pixels(PIXEL *src_data, PIXEL *dst_data, int rows, int cols);
 
 #endif // BMP_H

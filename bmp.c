@@ -175,27 +175,25 @@ unsigned char *rotate(unsigned char *srcCropBuffer, int cropWidthBuffer, int cro
   int new_height = cropWidthBuffer;
   int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
   PIXEL *dst_data = malloc((new_width * new_height + new_height * padding_out) * sizeof(PIXEL));
-  rotate_pixels(pixel_array, dst_data, cropHeightBuffer, cropWidthBuffer); // Передаем height как rows, width как cols
 
-  unsigned char* result = (unsigned char*)dst_data;
-}
-
-void rotate_pixels(PIXEL *src_data, PIXEL *dst_data, int rows, int cols) {
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
+    for (int r = 0; r < cropHeightBuffer; r++) {
+        for (int c = 0; c < cropWidthBuffer; c++) {
             // Новая строка = старый столбец
             int new_r = c;
             // Новый столбец = старая высота - 1 - старая строка
-            int new_c = rows - 1 - r;
+            int new_c = cropHeightBuffer - 1 - r;
 
-            int src_idx = r * cols + c;
-            int dst_idx = new_r * rows + new_c; // Ширина нового изображения = исходная высота (rows)
+            int src_idx = r * cropWidthBuffer + c;
+            int dst_idx = new_r * cropHeightBuffer + new_c; // Ширина нового изображения = исходная высота (rows)
 
-            dst_data[dst_idx] = src_data[src_idx];
+            dst_data[dst_idx] = pixel_array[src_idx];
         }
     }
-}
 
+  unsigned char* result = (unsigned char*)dst_data;
+
+  return result;
+}
 
 
 

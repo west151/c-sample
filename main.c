@@ -14,8 +14,8 @@ int main()
   int srcWidth, srcHeight;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);
-  unsigned char* croppedBuffer = crop(pixel_data, srcWidth, srcHeight, cropX, cropY, cropW, cropH);
-  unsigned char* rotateBuffer = rotate(croppedBuffer, cropW, cropH);
+  unsigned char *croppedBuffer = crop(pixel_data, srcWidth, srcHeight, cropX, cropY, cropW, cropH);
+  unsigned char *rotateBuffer = rotate(croppedBuffer, cropW, cropH);
   // после поворота меняем местами высоту и ширину
   int code = save_bmp(out_file_name, rotateBuffer, cropH, cropW);
 

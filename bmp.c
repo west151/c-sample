@@ -178,15 +178,21 @@ unsigned char *rotate(unsigned char *srcCropBuffer, int cropWidthBuffer, int cro
 
     for (int r = 0; r < cropHeightBuffer; r++) {
         for (int c = 0; c < cropWidthBuffer; c++) {
-            // Новая строка = старый столбец
-            int new_r = c;
-            // Новый столбец = старая высота - 1 - старая строка
-            int new_c = cropHeightBuffer - 1 - r;
+            // Исходные координаты: (c, r)
+            // Новые координаты для поворота на 90 градусов ПРОТИВ часовой стрелки:
+
+            // Новая строка = старая ширина - 1 - старый столбец
+            int new_r = cropWidthBuffer - 1 - c;
+            // Новый столбец = старая строка
+            int new_c = r;
 
             int src_idx = r * cropWidthBuffer + c;
-            int dst_idx = new_r * cropHeightBuffer + new_c; // Ширина нового изображения = исходная высота (rows)
+            int dst_idx = new_r * new_width + new_c;
+            // Обратите внимание: new_width используется здесь как количество столбцов в новой строке
 
-            dst_data[dst_idx] = pixel_array[src_idx];
+            if (dst_idx >= 0 && dst_idx < new_width * new_height) {
+                dst_data[dst_idx] = pixel_array[src_idx];
+            }
         }
     }
 

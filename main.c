@@ -10,7 +10,7 @@ int main()
   int cropX = 30;
   int cropY = 30;
   int cropW = 540;
-  int cropH = 440; // 300 x 400 - работает
+  int cropH = 440;
   int srcWidth, srcHeight;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);

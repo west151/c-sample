@@ -80,7 +80,7 @@ int save_bmp(char *file_name, unsigned char *buffer, const int width, const int 
     }
 
     // Вычисляем размер строки с учетом выравнивания до 4 байт
-    int rowPadded = (width * 3 + 3) & (~3);
+    unsigned int rowPadded = (width * 3 + 3) & (~3);
     uint32_t imageSize = rowPadded * abs(height);
     uint32_t fileSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + imageSize;
 

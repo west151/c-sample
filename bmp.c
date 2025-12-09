@@ -5,7 +5,7 @@
 #include <string.h>
 
 // загрузка файла (пиксели) в память
-unsigned char* load_bmp(char *file_name, int *sourceWidth, int *sourceHeight)
+unsigned char* load_bmp(char *file_name, unsigned int *sourceWidth, unsigned int *sourceHeight)
 {
   FILE* source_file_bmp;
   BITMAPFILEHEADER fileHeader;

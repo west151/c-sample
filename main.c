@@ -9,8 +9,8 @@ int main()
   char *out_file_name = "croup_lenna.bmp";
   int cropX = 100;
   int cropY = 133;
-  int cropW = 752;
-  int cropH = 244;
+  int cropW = 652;
+  int cropH = 344;
   unsigned int srcWidth, srcHeight;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);

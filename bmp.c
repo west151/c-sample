@@ -24,7 +24,7 @@ unsigned char* load_bmp(char *file_name, int *sourceWidth, int *sourceHeight)
   if (fileHeader.bfType != 0x4D42) {
     fprintf(stderr, "Файл не является BMP-изображением.\n");
     fclose(source_file_bmp);
-    return 0;
+    return NULL;
   }
 
   fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, source_file_bmp);
@@ -40,16 +40,16 @@ unsigned char* load_bmp(char *file_name, int *sourceWidth, int *sourceHeight)
   printf("infoHeader.biClrUsed : %d\n", infoHeader.biClrUsed );
   printf("infoHeader.biClrImportant: %d\n", infoHeader.biClrImportant);
 
-  *sourceWidth = infoHeader.biWidth;
-  *sourceHeight = infoHeader.biHeight;
+  *sourceWidth = (unsigned int)infoHeader.biWidth;
+  *sourceHeight = (unsigned int)infoHeader.biHeight;
 
   // Установка указателя файла на начало данных пикселей
   fseek(source_file_bmp, fileHeader.bfOffBits, SEEK_SET);
 
-  int width = infoHeader.biWidth;
-  int height = infoHeader.biHeight;
-  int bytesPerPixel = infoHeader.biBitCount / 8;
-  int rowPadded = (width * bytesPerPixel + 3) & (~3);
+  unsigned int width = infoHeader.biWidth;
+  unsigned int height = infoHeader.biHeight;
+  unsigned int bytesPerPixel = infoHeader.biBitCount / 8;
+  unsigned int rowPadded = (width * bytesPerPixel + 3) & (~3);
   //int num_bytes = width * height * 3; // 3 для RGB
 
   buffer = (unsigned char *)malloc(rowPadded * height);
@@ -59,6 +59,16 @@ unsigned char* load_bmp(char *file_name, int *sourceWidth, int *sourceHeight)
 
   return buffer;
 }
+
+// Функция загрузки bmp-файла имеет несколько проблем:
+//     Неправильное использование типа int в параметрах функции load_bmp. Должно быть unsigned int.
+//     Неправильная проверка сигнатуры файлового заголовка BMP. Правильный образ сигнатуры должен быть 0x424D (little-endian) или 0x4D42 (big-endian), но в функции написано != 0x4D42, что приведет к неправильной работе.
+//     Неправильное определение ширины и высоты изображения. Высота и ширина определяются из infoHeader.biWidth и infoHeader.biHeight, но при этом в функцие указан параметр sourceWidth со значением 0 и не используется значение биБитCount для определения цвета.
+//     Неправильное определение количества байтов на пиксель (bytesPerPixel). Правильный способ определить количество байтов на пиксель — использовать значение infoHeader.biBitCount и делить его на 8, но в функции указано, что bytesPerPixel = infoHeader.biBitCount / 8.
+//     Неправильное определение размера строки (rowPadded). Правильный способ определить размер строки — использовать значение width * bytesPerPixel + 3, а затем выполнять побитовое операцию & (~3), чтобы найти ближайшее кратное 4 байт.
+//     Неправильное определение количества байт в изображении (num_bytes). Правильный способ определять количество байт в изображении — использовать значение infoHeader.biSizeImage, а не width * height * bytesPerPixel + 3.
+//     Недостаточная информация о том, где расположены цвета RGB в пикселях. Если биБитCount равен 24 или 32, то цвета RGB могут быть расположены последовательно (RGB или RGBA), а если биБитCount равен 16, то цвет может быть расположен в два байта, с каждым компонентом цвета на отдельном байте.
+
 
 int save_bmp(char *file_name, unsigned char *buffer, const int width, const int height)
 {
@@ -212,7 +222,7 @@ const int cropHeight)
  if (startX < 0 || startY < 0 ||
         startX + cropWidth > srcWidth || startY + cropHeight > srcHeight ||
         cropWidth <= 0 || cropHeight <= 0) {
-        printf("Ошибка: Некорректные параметры фрагмента ROI.\n");
+        printf("Ошибка: Некорректные параметры фрагмента.\n");
         return NULL;
     }
 
@@ -232,7 +242,7 @@ const int cropHeight)
 
     for (int i = 0; i < abs(cropHeight); i++) {
         // Определение смещения строки в исходном и преобразованном буферах
-        int srcRowOffset = ((startY + i) * srcStride) + startX * 3;
+        unsigned int srcRowOffset = ((startY + i) * srcStride) + startX * 3;
         uint32_t destRowOffset = (i * destStride);
 
         // Копирование данных из исходного в преобразованный буфер
@@ -286,13 +296,13 @@ const int cropHeight)
     // return destBuffer;
 }
 
-unsigned char *rotate(unsigned char *srcCropBuffer, int cropWidthBuffer, int cropHeightBuffer)
+unsigned char *rotate(unsigned char *srcCropBuffer, const int cropWidthBuffer, const int cropHeightBuffer)
 {
   PIXEL* pixel_array = (PIXEL*)srcCropBuffer;
 
-  int new_width = cropHeightBuffer; // Ширина и высота меняются местами
-  int new_height = cropWidthBuffer;
-  int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
+  unsigned int new_width = cropHeightBuffer; // Ширина и высота меняются местами
+  unsigned int new_height = cropWidthBuffer;
+  unsigned int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
   PIXEL *dst_data = malloc((new_width * new_height + new_height * padding_out) * sizeof(PIXEL));
 
     for (int r = 0; r < cropHeightBuffer; r++) {
@@ -301,12 +311,12 @@ unsigned char *rotate(unsigned char *srcCropBuffer, int cropWidthBuffer, int cro
             // Новые координаты для поворота на 90 градусов ПРОТИВ часовой стрелки:
 
             // Новая строка = старая ширина - 1 - старый столбец
-            int new_r = cropWidthBuffer - 1 - c;
+            unsigned int new_r = cropWidthBuffer - 1 - c;
             // Новый столбец = старая строка
-            int new_c = r;
+            unsigned int new_c = r;
 
-            int src_idx = r * cropWidthBuffer + c;
-            int dst_idx = new_r * new_width + new_c;
+            unsigned int src_idx = r * cropWidthBuffer + c;
+            unsigned int dst_idx = new_r * new_width + new_c;
             // Обратите внимание: new_width используется здесь как количество столбцов в новой строке
 
             if (dst_idx >= 0 && dst_idx < new_width * new_height) {

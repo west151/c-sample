@@ -7,10 +7,10 @@ int main()
   char *in_file_name = "960px-Lenna.bmp";
   //char *in_file_name = "960px-Lenna-vert.bmp";  // Ширина: 724, Высота: 960
   char *out_file_name = "croup_lenna.bmp";
-  int cropX = 100;
-  int cropY = 133;
+  int cropX = 11;
+  int cropY = 11;
   int cropW = 652;
-  int cropH = 344;
+  int cropH = 544;
   unsigned int srcWidth, srcHeight;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);

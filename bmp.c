@@ -22,7 +22,7 @@ unsigned char* load_bmp(char *file_name, unsigned int *sourceWidth, unsigned int
 
   // Проверка сигнатуры 'BM' (в little-endian это 0x4D42)
   if (fileHeader.bfType != 0x4D42) {
-    fprintf(stderr, "Файл не является BMP-изображением.\n");
+    printf("Файл %s не является BMP-изображением.\n", file_name);
     fclose(source_file_bmp);
     return NULL;
   }
@@ -53,22 +53,17 @@ unsigned char* load_bmp(char *file_name, unsigned int *sourceWidth, unsigned int
   //int num_bytes = width * height * 3; // 3 для RGB
 
   buffer = (unsigned char *)malloc(rowPadded * height);
-  fread(buffer, sizeof(unsigned char), rowPadded * height, source_file_bmp);
+  size_t count_read = fread(buffer, sizeof(unsigned char), rowPadded * height, source_file_bmp);
+  // если прочитали не равное размеру количество байт
+  if(infoHeader.biSizeImage != count_read) {
+    free(buffer);
+    return NULL;
+  }
 
   fclose(source_file_bmp);
 
   return buffer;
 }
-
-// Функция загрузки bmp-файла имеет несколько проблем:
-//     Неправильное использование типа int в параметрах функции load_bmp. Должно быть unsigned int.
-//     Неправильная проверка сигнатуры файлового заголовка BMP. Правильный образ сигнатуры должен быть 0x424D (little-endian) или 0x4D42 (big-endian), но в функции написано != 0x4D42, что приведет к неправильной работе.
-//     Неправильное определение ширины и высоты изображения. Высота и ширина определяются из infoHeader.biWidth и infoHeader.biHeight, но при этом в функцие указан параметр sourceWidth со значением 0 и не используется значение биБитCount для определения цвета.
-//     Неправильное определение количества байтов на пиксель (bytesPerPixel). Правильный способ определить количество байтов на пиксель — использовать значение infoHeader.biBitCount и делить его на 8, но в функции указано, что bytesPerPixel = infoHeader.biBitCount / 8.
-//     Неправильное определение размера строки (rowPadded). Правильный способ определить размер строки — использовать значение width * bytesPerPixel + 3, а затем выполнять побитовое операцию & (~3), чтобы найти ближайшее кратное 4 байт.
-//     Неправильное определение количества байт в изображении (num_bytes). Правильный способ определять количество байт в изображении — использовать значение infoHeader.biSizeImage, а не width * height * bytesPerPixel + 3.
-//     Недостаточная информация о том, где расположены цвета RGB в пикселях. Если биБитCount равен 24 или 32, то цвета RGB могут быть расположены последовательно (RGB или RGBA), а если биБитCount равен 16, то цвет может быть расположен в два байта, с каждым компонентом цвета на отдельном байте.
-
 
 int save_bmp(char *file_name, unsigned char *buffer, const int width, const int height)
 {
@@ -138,77 +133,6 @@ int save_bmp(char *file_name, unsigned char *buffer, const int width, const int 
     printf("Файл %s успешно сохранен.\n", file_name);
 
   return 0;
-
-
-// // Присваиваем переменной _file_name значение из параметра file_name
-//     char* file_name = _file_name;
-
-//     FILE* target_file_bmp = fopen(file_name, "wb");
-//     if (!target_file_bmp) {
-//         printf("Ошибка: Не удалось создать файл %s\n", file_name);
-//         return -1;
-//     }
-
-//     // Вычисляем размер строки с учетом выравнивания до 4 байт
-//     int rowPadded = (width * 3 + 3) & (~3);
-
-//     // Рассчитываем размер изображения в БООКСАХ
-//     uint32_t imageSize = rowPadded * abs(height);
-
-//     // Рассчитываем общий размер файла (заголовки и данные)
-//     uint32_t fileSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + imageSize;
-
-//     // --- Заполнение BITMAPFILEHEADER ---
-//     BITMAPFILEHEADER fileHeader;
-//     fileHeader.bfType = 0x4D42;      // 'BM'
-//     fileHeader.bfSize = fileSize;
-//     fileHeader.bfReserved1 = 0;
-//     fileHeader.bfReserved2 = 0;
-//     fileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-
-//     // --- Заполнение BITMAPINFOHEADER ---
-//     BITMAPINFOHEADER infoHeader;
-//     infoHeader.biSize = sizeof(BITMAPINFOHEADER);
-//     infoHeader.biWidth = width;
-//     infoHeader.biHeight = height; // Положительная высота означает, что изображение хранится снизу вверх
-//     infoHeader.biPlanes = 1;
-//     infoHeader.biBitCount = 24;   // 24 бита на пиксель
-//     infoHeader.biCompression = 0; // BI_RGB (без сжатия)
-//     infoHeader.biSizeImage = imageSize;
-//     infoHeader.biXPelsPerMeter = 2834;
-//     infoHeader.biYPelsPerMeter = 2834;
-//     infoHeader.biClrUsed = 0;
-//     infoHeader.biClrImportant = 0;
-
-//     // --- Запись заголовков в файл ---
-//     fwrite(&fileHeader, sizeof(BITMAPFILEHEADER), 1, target_file_bmp);
-//     fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, target_file_bmp);
-
-//     if (width * 3 == rowPadded) {
-//         // Оптимизированная запись, если паддинг не нужен (ширина кратна 4)
-//         fwrite(buffer, 1, imageSize, target_file_bmp);
-//     } else {
-//         // Если паддинг needed, записываем построчно
-//         unsigned char padding[3] = {0, 0, 0};
-//         int paddingSize = rowPadded - (width * 3);
-//         for (int i = 0; i < abs(height); i++) {
-//             // Записываем строку данных
-//             fwrite(buffer + i * (width * 3), 1, width * 3, target_file_bmp);
-//             fwrite(padding, 1, paddingSize, target_file_bmp);
-//         }
-//     }
-
-//     fclose(target_file_bmp);
-//     printf("Файл %s успешно сохранен.\n", file_name);
-
-//     return 0;
-
-     // Упрощена запись в файле file_name при вызове функции.
-     // Добавлена проверка на ошибку при открытии файла.
-     // Исправлено вычисление размера строки с учетом выравнивания до 4 байт.
-     // Исправлено вычисление размера изображения в БООКСАХ.
-     // Исправлен формат записи данных в файле.
-
 }
 
 unsigned char* crop(unsigned char* srcBuffer,
@@ -250,50 +174,6 @@ const int cropHeight)
     }
 
     return destBuffer;
-
-    // // Проверки на корректность координат и размеров
-    // if (startX < 0 || startY < 0 || startX + cropWidth > srcWidth || startY + cropHeight > srcHeight || cropWidth <= 0 || cropHeight <= 0) {
-    //     printf("Ошибка: Некорректные параметры фрагмента ROI.\n");
-    //     return NULL;
-    // }
-
-    // // Рассчитываем шаг строки (stride) для исходного и нового буферов, учитывая выравнивание BMP
-    // int srcStride = (srcWidth * 3 + 3) & (~3);
-    // int destStride = (cropWidth * 3 + 3) & (~3);
-    // uint32_t destImageSize = destStride * abs(cropHeight);
-
-    // // Выделяем память под новый буфер
-    // unsigned char* destBuffer = (unsigned char*)malloc(destImageSize);
-    // if (!destBuffer) {
-    //     printf("Ошибка: Недостаточно памяти для нового буфера.\n");
-    //     return NULL;
-    // }
-
-    // // Копируем данные построчно
-    // for (int i = 0; i < abs(cropHeight); i++) {
-    //     // Рассчитываем смещение (offset) для текущей строки в исходном буфере:
-    //     // startY * srcStride дает начало нужной строки в исходнике.
-    //     // startX * 3 дает смещение до нужного пикселя в этой строке (3 байта на пиксель).
-    //     // (srcHeight - 1 - startY - i) * srcStride - альтернативный расчет для bottom-up BMP
-
-    //     // Для простоты примера, будем считать, что изображения "верх-вниз" в памяти или мы корректно обрабатываем bottom-up:
-    //     // Если srcHeight > 0 (bottom-up BMP):
-    //     int srcRowOffset = (startY + i) * srcStride + startX * 3;
-    //     // Если srcHeight < 0 (top-down BMP):
-    //     // int srcRowOffset = abs(startY + i) * srcStride + startX * 3;
-
-    //     // Рассчитываем смещение для текущей строки в новом буфере (всегда top-down при копировании в flat buffer)
-    //     int destRowOffset = i * destStride;
-
-    //     // Копируем cropWidth * 3 байт из исходной строки в новую
-    //     memcpy(destBuffer + destRowOffset, srcBuffer + srcRowOffset, cropWidth * 3);
-
-    //     // Примечание: memcpy копирует только нужные данные. Паддинг в конце строки нового буфера
-    //     // уже учтен выделенным размером destImageSize и остается нулевым (если память была инициализирована)
-    //     // или просто не является проблемой для функции save_buffer_to_bmp, если она корректно пишет паддинг.
-    // }
-
-    // return destBuffer;
 }
 
 unsigned char *rotate(unsigned char *srcCropBuffer, const int cropWidthBuffer, const int cropHeightBuffer)

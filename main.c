@@ -11,14 +11,14 @@ int main()
   uint32_t crop_y = 11;
   uint32_t crop_w = 652;
   uint32_t crop_h = 343;
-  uint32_t srcWidth, srcHeight;
+  uint32_t src_width_bmp, src_height_bmp;
 
-  unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);
+  unsigned char *pixel_data = load_bmp(in_file_name, &src_width_bmp, &src_height_bmp);
 
   if(!pixel_data)
     return -1;
 
-  unsigned char *croppedBuffer = crop(pixel_data, srcWidth, srcHeight, crop_x, crop_y, crop_w, crop_h);
+  unsigned char *croppedBuffer = crop(pixel_data, src_width_bmp, src_height_bmp, crop_x, crop_y, crop_w, crop_h);
 
   if(!croppedBuffer) {
     free(pixel_data);

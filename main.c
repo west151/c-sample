@@ -10,8 +10,8 @@ int main()
   int cropX = 11;
   int cropY = 11;
   int cropW = 652;
-  int cropH = 544;
-  unsigned int srcWidth, srcHeight;
+  int cropH = 344;
+  uint32_t srcWidth, srcHeight;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &srcWidth, &srcHeight);
 
@@ -34,8 +34,8 @@ int main()
   }
 
   // после поворота меняем местами высоту и ширину
-  int code = save_bmp(out_file_name, rotateBuffer, cropH, cropW);
-  //int code = save_bmp(out_file_name, croppedBuffer, cropW, cropH);
+  //int code = save_bmp(out_file_name, rotateBuffer, cropH, cropW);
+  int code = save_bmp(out_file_name, croppedBuffer, cropW, cropH);
 
   free(pixel_data);
   free(croppedBuffer);

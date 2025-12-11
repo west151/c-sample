@@ -5,12 +5,15 @@
 #include <string.h>
 
 // загрузка файла (пиксели) в память
-unsigned char* load_bmp(char *file_name, unsigned int *sourceWidth, unsigned int *sourceHeight)
+unsigned char* load_bmp(char *file_name, uint32_t *sourceWidth, uint32_t *sourceHeight)
 {
   FILE* source_file_bmp;
   BITMAPFILEHEADER fileHeader;
   BITMAPINFOHEADER infoHeader;
   unsigned char *buffer;
+
+  memset(&fileHeader, 0, sizeof(fileHeader));
+  memset(&infoHeader, 0, sizeof(infoHeader));
 
   if((source_file_bmp = fopen(file_name,"rb")) == NULL)
     return NULL;
@@ -40,17 +43,16 @@ unsigned char* load_bmp(char *file_name, unsigned int *sourceWidth, unsigned int
   printf("infoHeader.biClrUsed : %d\n", infoHeader.biClrUsed );
   printf("infoHeader.biClrImportant: %d\n", infoHeader.biClrImportant);
 
-  *sourceWidth = (unsigned int)infoHeader.biWidth;
-  *sourceHeight = (unsigned int)infoHeader.biHeight;
+  *sourceWidth = (uint32_t)infoHeader.biWidth;
+  *sourceHeight = (uint32_t)infoHeader.biHeight;
 
   // Установка указателя файла на начало данных пикселей
   fseek(source_file_bmp, fileHeader.bfOffBits, SEEK_SET);
 
-  unsigned int width = infoHeader.biWidth;
-  unsigned int height = infoHeader.biHeight;
-  unsigned int bytesPerPixel = infoHeader.biBitCount / 8;
-  unsigned int rowPadded = (width * bytesPerPixel + 3) & (~3);
-  //int num_bytes = width * height * 3; // 3 для RGB
+  uint32_t width = infoHeader.biWidth;
+  uint32_t height = infoHeader.biHeight;
+  uint32_t bytesPerPixel = infoHeader.biBitCount / 8;
+  uint32_t rowPadded = (width * bytesPerPixel + 3) & (~3);
 
   buffer = (unsigned char *)malloc(rowPadded * height);
   size_t count_read = fread(buffer, sizeof(unsigned char), rowPadded * height, source_file_bmp);

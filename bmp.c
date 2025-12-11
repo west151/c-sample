@@ -5,7 +5,7 @@
 #include <string.h>
 
 // загрузка файла (пиксели) в память
-unsigned char* load_bmp(char *file_name, uint32_t *sourceWidth, uint32_t *sourceHeight)
+unsigned char* load_bmp(char *file_name, uint32_t *source_width, uint32_t *source_height)
 {
   FILE* source_file_bmp;
   BITMAPFILEHEADER fileHeader;
@@ -43,8 +43,8 @@ unsigned char* load_bmp(char *file_name, uint32_t *sourceWidth, uint32_t *source
   printf("infoHeader.biClrUsed : %d\n", infoHeader.biClrUsed );
   printf("infoHeader.biClrImportant: %d\n", infoHeader.biClrImportant);
 
-  *sourceWidth = (uint32_t)infoHeader.biWidth;
-  *sourceHeight = (uint32_t)infoHeader.biHeight;
+  *source_width = (uint32_t)infoHeader.biWidth;
+  *source_height = (uint32_t)infoHeader.biHeight;
 
   // Установка указателя файла на начало данных пикселей
   fseek(source_file_bmp, fileHeader.bfOffBits, SEEK_SET);
@@ -67,7 +67,10 @@ unsigned char* load_bmp(char *file_name, uint32_t *sourceWidth, uint32_t *source
   return buffer;
 }
 
-int save_bmp(char *file_name, unsigned char *buffer, const int width, const int height)
+int save_bmp(char *file_name,
+unsigned char *buffer,
+const uint32_t new_width,
+const uint32_t new_height)
 {
     FILE* target_file_bmp = fopen(file_name, "wb");
 
@@ -77,8 +80,8 @@ int save_bmp(char *file_name, unsigned char *buffer, const int width, const int 
     }
 
     // Вычисляем размер строки с учетом выравнивания до 4 байт
-    unsigned int rowPadded = (width * 3 + 3) & (~3);
-    uint32_t imageSize = rowPadded * abs(height);
+    unsigned int rowPadded = (new_width * 3 + 3) & (~3);
+    uint32_t imageSize = rowPadded * abs(new_height);
     uint32_t fileSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + imageSize;
 
     // --- Заполнение BITMAPFILEHEADER ---
@@ -92,8 +95,8 @@ int save_bmp(char *file_name, unsigned char *buffer, const int width, const int 
     // --- Заполнение BITMAPINFOHEADER ---
     BITMAPINFOHEADER infoHeader;
     infoHeader.biSize = sizeof(BITMAPINFOHEADER);
-    infoHeader.biWidth = width;
-    infoHeader.biHeight = height; // Положительная высота означает, что изображение хранится снизу вверх
+    infoHeader.biWidth = new_width;
+    infoHeader.biHeight = new_height; // Положительная высота означает, что изображение хранится снизу вверх
     infoHeader.biPlanes = 1;
     infoHeader.biBitCount = 24;   // 24 бита на пиксель
     infoHeader.biCompression = 0; // BI_RGB (без сжатия)
@@ -115,17 +118,17 @@ int save_bmp(char *file_name, unsigned char *buffer, const int width, const int 
     // В данном примере мы предполагаем, что буфер *уже* имеет нужный размер
     // с учетом паддинга, как было рассчитано в функции загрузки.
 
-    if (width * 3 == rowPadded) {
+    if (new_width * 3 == rowPadded) {
         //Оптимизированная запись, если паддинг не нужен (ширина кратна 4)
         fwrite(buffer, 1, imageSize, target_file_bmp);
     } else {
         // Если паддинг нужен, записываем построчно
         unsigned char padding[3] = {0, 0, 0};
-        int paddingSize = rowPadded - (width * 3);
+        int paddingSize = rowPadded - (new_width * 3);
 
-        for (int i = 0; i < abs(height); i++) {
+        for (int i = 0; i < abs(new_height); i++) {
             // Записываем строку данных
-            fwrite(buffer + i * (width * 3), 1, width * 3, target_file_bmp);
+            fwrite(buffer + i * (new_width * 3), 1, new_width * 3, target_file_bmp);
             // Записываем паддинг
             fwrite(padding, 1, paddingSize, target_file_bmp);
         }
@@ -138,12 +141,12 @@ int save_bmp(char *file_name, unsigned char *buffer, const int width, const int 
 }
 
 unsigned char* crop(unsigned char* srcBuffer,
-const int srcWidth,
-const int srcHeight,
-const int startX,
-const int startY,
-const int cropWidth,
-const int cropHeight)
+const uint32_t srcWidth,
+const uint32_t srcHeight,
+const uint32_t startX,
+const uint32_t startY,
+const uint32_t cropWidth,
+const uint32_t cropHeight)
 {
  if (startX < 0 || startY < 0 ||
         startX + cropWidth > srcWidth || startY + cropHeight > srcHeight ||
@@ -178,7 +181,7 @@ const int cropHeight)
     return destBuffer;
 }
 
-unsigned char *rotate(unsigned char *srcCropBuffer, const int cropWidthBuffer, const int cropHeightBuffer)
+unsigned char *rotate(unsigned char *srcCropBuffer, const uint32_t cropWidthBuffer, const uint32_t cropHeightBuffer)
 {
   PIXEL* pixel_array = (PIXEL*)srcCropBuffer;
 

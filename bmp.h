@@ -36,9 +36,22 @@ typedef struct {
     uint8_t red;
 } PIXEL;
 
-unsigned char* load_bmp(char *file_name, uint32_t *sourceWidth, uint32_t *sourceHeight);
-int save_bmp(char *file_name, unsigned char *buffer, const int width, const int height);
-unsigned char* crop(unsigned char* srcBuffer, const int srcWidth, const int srcHeight, const int startX, const int startY, const int cropWidth, const int cropHeight);
-unsigned char* rotate(unsigned char* srcCropBuffer, const int cropWidthBuffer, const int cropHeightBuffer);
+unsigned char* load_bmp(char *file_name,
+                        uint32_t *source_width,
+                        uint32_t *source_height);
+int save_bmp(char *file_name,
+             unsigned char *buffer,
+             const uint32_t new_width,
+             const uint32_t new_height);
+unsigned char* crop(unsigned char* srcBuffer,
+                    const uint32_t srcWidth,
+                    const uint32_t srcHeight,
+                    const uint32_t startX,
+                    const uint32_t startY,
+                    const uint32_t cropWidth,
+                    const uint32_t cropHeight);
+unsigned char* rotate(unsigned char* srcCropBuffer,
+                      const uint32_t cropWidthBuffer,
+                      const uint32_t cropHeightBuffer);
 
 #endif // BMP_H

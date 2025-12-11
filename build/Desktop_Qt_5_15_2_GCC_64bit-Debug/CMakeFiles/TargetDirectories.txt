@@ -1,7 +1,0 @@
-/home/user/work/c-sample/build/Desktop_Qt_5_15_2_GCC_64bit-Debug/CMakeFiles/c-sample.dir
-/home/user/work/c-sample/build/Desktop_Qt_5_15_2_GCC_64bit-Debug/CMakeFiles/edit_cache.dir
-/home/user/work/c-sample/build/Desktop_Qt_5_15_2_GCC_64bit-Debug/CMakeFiles/rebuild_cache.dir
-/home/user/work/c-sample/build/Desktop_Qt_5_15_2_GCC_64bit-Debug/CMakeFiles/list_install_components.dir
-/home/user/work/c-sample/build/Desktop_Qt_5_15_2_GCC_64bit-Debug/CMakeFiles/install.dir
-/home/user/work/c-sample/build/Desktop_Qt_5_15_2_GCC_64bit-Debug/CMakeFiles/install/local.dir
-/home/user/work/c-sample/build/Desktop_Qt_5_15_2_GCC_64bit-Debug/CMakeFiles/install/strip.dir

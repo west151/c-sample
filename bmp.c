@@ -1,216 +1,210 @@
 #include "bmp.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-// загрузка файла (пиксели) в память
-unsigned char* load_bmp(char *file_name, uint32_t *source_width, uint32_t *source_height)
+unsigned char *load_bmp(const char *file_name,
+                        uint32_t *out_width,
+                        uint32_t *out_height)
 {
-  FILE* source_file_bmp;
-  BITMAPFILEHEADER fileHeader;
-  BITMAPINFOHEADER infoHeader;
-  unsigned char *buffer;
+    FILE *f = fopen(file_name, "rb");
+    if (!f) {
+        printf("Error: file not found\n");
+        return NULL;
+    }
 
-  memset(&fileHeader, 0, sizeof(fileHeader));
-  memset(&infoHeader, 0, sizeof(infoHeader));
+    BITMAPFILEHEADER fh;
+    BITMAPINFOHEADER ih;
 
-  if((source_file_bmp = fopen(file_name,"rb")) == NULL)
-    return NULL;
+    if (fread(&fh, sizeof(fh), 1, f) != 1) {
+        printf("Error: read FILEHEADER\n");
+        fclose(f);
+        return NULL;
+    }
 
-  fread(&fileHeader, sizeof(BITMAPFILEHEADER), 1, source_file_bmp);
+    if (fh.bfType != 0x4D42) {
+        printf("Error: not BMP\n");
+        fclose(f);
+        return NULL;
+    }
 
-  printf("bfSize: %d\n", fileHeader.bfSize);
-  printf("bfOffBits: %d\n", fileHeader.bfOffBits);
+    if (fread(&ih, sizeof(ih), 1, f) != 1) {
+        printf("Error: read INFOHEADER\n");
+        fclose(f);
+        return NULL;
+    }
 
-  // Проверка сигнатуры 'BM' (в little-endian это 0x4D42)
-  if (fileHeader.bfType != 0x4D42) {
-    printf("Файл %s не является BMP-изображением.\n", file_name);
-    fclose(source_file_bmp);
-    return NULL;
-  }
+    if (ih.biBitCount != 24 || ih.biCompression != 0) {
+        printf("Error: only 24‑bit uncompressed BMP supported\n");
+        fclose(f);
+        return NULL;
+    }
 
-  fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, source_file_bmp);
+    if (ih.biHeight < 0) {
+        printf("Error: top‑down BMP not supported\n");
+        fclose(f);
+        return NULL;
+    }
 
-  printf("Смещение до данных изображения: %d\n", fileHeader.bfOffBits);
-  printf("Ширина: %d, Высота: %d\n", infoHeader.biWidth, infoHeader.biHeight);
-  printf("Глубина цвета (бит/пиксель): %d\n", infoHeader.biBitCount);
+    uint32_t width  = (uint32_t)ih.biWidth;
+    uint32_t height = (uint32_t)ih.biHeight;
 
-  printf("infoHeader.biSizeImage: %d\n", infoHeader.biSizeImage);
-  printf("infoHeader.biPlanes: %d\n", infoHeader.biPlanes);
-  printf("infoHeader.biXPelsPerMeter: %d\n", infoHeader.biXPelsPerMeter);
-  printf("infoHeader.biYPelsPerMeter: %d\n", infoHeader.biYPelsPerMeter);
-  printf("infoHeader.biClrUsed : %d\n", infoHeader.biClrUsed );
-  printf("infoHeader.biClrImportant: %d\n", infoHeader.biClrImportant);
+    uint32_t bytesPerPixel = 3;
+    uint32_t stride = (width * bytesPerPixel + 3) & ~3u;
+    uint32_t img_size = stride * height;
 
-  *source_width = (uint32_t)infoHeader.biWidth;
-  *source_height = (uint32_t)infoHeader.biHeight;
+    if (fseek(f, (long)fh.bfOffBits, SEEK_SET) != 0) {
+        printf("Error: seek to pixels\n");
+        fclose(f);
+        return NULL;
+    }
 
-  // Установка указателя файла на начало данных пикселей
-  fseek(source_file_bmp, fileHeader.bfOffBits, SEEK_SET);
+    unsigned char *buf = (unsigned char *)malloc(img_size);
+    if (!buf) {
+        printf("Error: not enough memory\n");
+        fclose(f);
+        return NULL;
+    }
 
-  uint32_t width = infoHeader.biWidth;
-  uint32_t height = infoHeader.biHeight;
-  uint32_t bytesPerPixel = infoHeader.biBitCount / 8;
-  uint32_t rowPadded = (width * bytesPerPixel + 3) & (~3);
+    size_t read_cnt = fread(buf, 1, img_size, f);
+    if (read_cnt != img_size) {
+        printf("Error: read pixels\n");
+        free(buf);
+        fclose(f);
+        return NULL;
+    }
 
-  buffer = (unsigned char *)malloc(rowPadded * height);
-  size_t count_read = fread(buffer, sizeof(unsigned char), rowPadded * height, source_file_bmp);
-  // если прочитали не равное размеру количество байт
-  if(infoHeader.biSizeImage != count_read) {
-    free(buffer);
-    return NULL;
-  }
-
-  fclose(source_file_bmp);
-
-  return buffer;
+    fclose(f);
+    *out_width  = width;
+    *out_height = height;
+    return buf;
 }
-
-int save_bmp(char *file_name,
-unsigned char *buffer,
-const uint32_t new_width,
-const uint32_t new_height)
+int save_bmp(const char *file_name,
+             unsigned char *buffer,
+             uint32_t width,
+             uint32_t height)
 {
-    FILE* target_file_bmp = fopen(file_name, "wb");
-
-    if (!target_file_bmp) {
-        printf("Ошибка: Не удалось создать файл %s\n", file_name);
+    FILE *f = fopen(file_name, "wb");
+    if (!f) {
+        printf("Error: can't create file %s\n", file_name);
         return -1;
     }
 
-    // Вычисляем размер строки с учетом выравнивания до 4 байт
-    unsigned int rowPadded = (new_width * 3 + 3) & (~3);
-    uint32_t imageSize = rowPadded * abs(new_height);
-    uint32_t fileSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + imageSize;
+    uint32_t stride  = (width * 3 + 3) & ~3u;
+    uint32_t img_size  = stride * height;
+    uint32_t file_size = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + img_size;
 
-    // --- Заполнение BITMAPFILEHEADER ---
-    BITMAPFILEHEADER fileHeader;
-    fileHeader.bfType = 0x4D42;      // 'BM'
-    fileHeader.bfSize = fileSize;
-    fileHeader.bfReserved1 = 0;
-    fileHeader.bfReserved2 = 0;
-    fileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    BITMAPFILEHEADER fh;
+    memset(&fh, 0, sizeof(fh));
+    fh.bfType = 0x4D42;
+    fh.bfSize = file_size;
+    fh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-    // --- Заполнение BITMAPINFOHEADER ---
-    BITMAPINFOHEADER infoHeader;
-    infoHeader.biSize = sizeof(BITMAPINFOHEADER);
-    infoHeader.biWidth = new_width;
-    infoHeader.biHeight = new_height; // Положительная высота означает, что изображение хранится снизу вверх
-    infoHeader.biPlanes = 1;
-    infoHeader.biBitCount = 24;   // 24 бита на пиксель
-    infoHeader.biCompression = 0; // BI_RGB (без сжатия)
-    infoHeader.biSizeImage = imageSize;
-    infoHeader.biXPelsPerMeter = 2834;
-    infoHeader.biYPelsPerMeter = 2834;
-    infoHeader.biClrUsed = 0;
-    infoHeader.biClrImportant = 0;
+    BITMAPINFOHEADER ih;
+    memset(&ih, 0, sizeof(ih));
+    ih.biSize = sizeof(BITMAPINFOHEADER);
+    ih.biWidth = (int32_t)width;
+    ih.biHeight = (int32_t)height;
+    ih.biPlanes = 1;
+    ih.biBitCount = 24;
+    ih.biCompression = 0;
+    ih.biXPelsPerMeter = 0;
+    ih.biYPelsPerMeter = 0;
+    ih.biClrUsed = 0;
+    ih.biClrImportant  = 0;
+    ih.biSizeImage = img_size;
 
-    // --- Запись заголовков в файл ---
-    fwrite(&fileHeader, sizeof(BITMAPFILEHEADER), 1, target_file_bmp);
-    fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, target_file_bmp);
+    fwrite(&fh, sizeof(fh), 1, f);
+    fwrite(&ih, sizeof(ih), 1, f);
 
-    // --- Запись данных изображения с учетом выравнивания ---
+    unsigned char padding[3] = {0, 0, 0};
+    uint32_t pad_size = stride - width * 3;
 
-    // Если данные в буфере уже выровнены, можно записать их одной операцией.
-    // Если буфер содержит "плоские" данные без паддинга,
-    // нужно итерироваться по строкам и добавлять паддинг вручную.
-    // В данном примере мы предполагаем, что буфер *уже* имеет нужный размер
-    // с учетом паддинга, как было рассчитано в функции загрузки.
-
-    if (new_width * 3 == rowPadded) {
-        //Оптимизированная запись, если паддинг не нужен (ширина кратна 4)
-        fwrite(buffer, 1, imageSize, target_file_bmp);
-    } else {
-        // Если паддинг нужен, записываем построчно
-        unsigned char padding[3] = {0, 0, 0};
-        int paddingSize = rowPadded - (new_width * 3);
-
-        for (int i = 0; i < abs(new_height); i++) {
-            // Записываем строку данных
-            fwrite(buffer + i * (new_width * 3), 1, new_width * 3, target_file_bmp);
-            // Записываем паддинг
-            fwrite(padding, 1, paddingSize, target_file_bmp);
-        }
+    for (uint32_t y = 0; y < height; ++y) {
+        uint32_t row_off = y * stride;
+        fwrite(buffer + row_off, 1, width * 3, f);
+        if (pad_size)
+            fwrite(padding, 1, pad_size, f);
     }
 
-    fclose(target_file_bmp);
-    printf("Файл %s успешно сохранен.\n", file_name);
-
-  return 0;
+    fclose(f);
+    return 0;
 }
 
-unsigned char* crop(unsigned char* srcBuffer,
-const uint32_t srcWidth,
-const uint32_t srcHeight,
-const uint32_t startX,
-const uint32_t startY,
-const uint32_t cropWidth,
-const uint32_t cropHeight)
+unsigned char *crop(unsigned char *src,
+                    uint32_t srcWidth,
+                    uint32_t srcHeight,
+                    uint32_t startX,
+                    uint32_t startY,
+                    uint32_t cropWidth,
+                    uint32_t cropHeight)
 {
- if (startX < 0 || startY < 0 ||
-        startX + cropWidth > srcWidth || startY + cropHeight > srcHeight ||
-        cropWidth <= 0 || cropHeight <= 0) {
-        printf("Ошибка: Некорректные параметры фрагмента.\n");
+    if (cropWidth == 0 || cropHeight == 0 ||
+        startX + cropWidth  > srcWidth ||
+        startY + cropHeight > srcHeight) {
+        printf("Error: incorrect parameters\n");
         return NULL;
     }
 
-    // Определение шага для исходного и преобразованного буферов
-    int srcStride = (srcWidth * 3 + 3) & (~3);
-    uint32_t destStride = (cropWidth * 3 + 3) & (~3);
+    uint32_t src_stride = (srcWidth * 3 + 3) & ~3u;
+    uint32_t dst_stride = (cropWidth * 3 + 3) & ~3u;
+    uint32_t dst_size = dst_stride * cropHeight;
 
-    // Рассчитываем размер изображения
-    uint32_t destImageSize = destStride * abs(cropHeight);
-
-    // Выделяем память для нового буфера
-    unsigned char* destBuffer = (unsigned char*)malloc(destImageSize);
-    if (!destBuffer) {
-        printf("Ошибка: Недостаточно памяти для нового буфера.\n");
+    unsigned char *dst = malloc(dst_size);
+    if (!dst) {
+        printf("Error: not enough memory\n");
         return NULL;
     }
+    memset(dst, 0, dst_size);
 
-    for (int i = 0; i < abs(cropHeight); i++) {
-        // Определение смещения строки в исходном и преобразованном буферах
-        unsigned int srcRowOffset = ((startY + i) * srcStride) + startX * 3;
-        uint32_t destRowOffset = (i * destStride);
+    for (uint32_t y_logic = 0; y_logic < cropHeight; ++y_logic) {
+        uint32_t src_y_logic = startY + y_logic;
+        uint32_t src_y_buf = srcHeight - 1 - src_y_logic;
+        uint32_t src_off = src_y_buf * src_stride + startX * 3;
 
-        // Копирование данных из исходного в преобразованный буфер
-        memcpy(destBuffer + destRowOffset, srcBuffer + srcRowOffset, cropWidth * 3);
+        uint32_t dst_y_buf = cropHeight - 1 - y_logic;
+        uint32_t dst_off = dst_y_buf * dst_stride;
+
+        memcpy(dst + dst_off, src + src_off, cropWidth * 3);
     }
 
-    return destBuffer;
+    return dst;
 }
 
-unsigned char *rotate(unsigned char *srcCropBuffer, const uint32_t cropWidthBuffer, const uint32_t cropHeightBuffer)
+unsigned char *rotate_bmp(unsigned char *src,
+                          uint32_t srcWidth,
+                          uint32_t srcHeight)
 {
-  PIXEL* pixel_array = (PIXEL*)srcCropBuffer;
+    uint32_t src_stride = (srcWidth * 3 + 3) & ~3u;
 
-  unsigned int new_width = cropHeightBuffer; // Ширина и высота меняются местами
-  unsigned int new_height = cropWidthBuffer;
-  unsigned int padding_out = (4 - (new_width * sizeof(PIXEL)) % 4) % 4;
-  PIXEL *dst_data = malloc((new_width * new_height + new_height * padding_out) * sizeof(PIXEL));
+    uint32_t dstWidth  = srcHeight;
+    uint32_t dstHeight = srcWidth;
+    uint32_t dst_stride = (dstWidth * 3 + 3) & ~3u;
+    uint32_t dst_size  = dst_stride * dstHeight;
 
-    for (int r = 0; r < cropHeightBuffer; r++) {
-        for (int c = 0; c < cropWidthBuffer; c++) {
-            // Исходные координаты: (c, r)
-            // Новые координаты для поворота на 90 градусов ПРОТИВ часовой стрелки:
+    unsigned char *dst = malloc(dst_size);
+    if (!dst) {
+        printf("Error: not enough memory\n");
+        return NULL;
+    }
+    memset(dst, 0, dst_size);
 
-            // Новая строка = старая ширина - 1 - старый столбец
-            unsigned int new_r = cropWidthBuffer - 1 - c;
-            // Новый столбец = старая строка
-            unsigned int new_c = r;
+    for (uint32_t y_buf = 0; y_buf < srcHeight; ++y_buf) {
+        for (uint32_t x = 0; x < srcWidth; ++x) {
 
-            unsigned int src_idx = r * cropWidthBuffer + c;
-            unsigned int dst_idx = new_r * new_width + new_c;
-            // Обратите внимание: new_width используется здесь как количество столбцов в новой строке
+            uint32_t src_off = y_buf * src_stride + x * 3;
 
-            if (dst_idx >= 0 && dst_idx < new_width * new_height) {
-                dst_data[dst_idx] = pixel_array[src_idx];
-            }
+            uint32_t y_top = srcHeight - 1 - y_buf;
+
+            uint32_t new_x = y_buf;
+            uint32_t new_y_top = x;
+
+            uint32_t dst_y_buf  = dstHeight - 1 - new_y_top;
+            uint32_t dst_off = dst_y_buf * dst_stride + new_x * 3;
+
+            memcpy(dst + dst_off, src + src_off, 3);
         }
     }
-
-  unsigned char* result = (unsigned char*)dst_data;
-
-  return result;
+    return dst;
 }
+

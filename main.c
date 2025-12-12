@@ -8,9 +8,9 @@ int main()
   //char *in_file_name = "960px-Lenna-vert.bmp";  // Ширина: 724, Высота: 960
   char *out_file_name = "croup_lenna.bmp";
   uint32_t crop_x = 50;
-  uint32_t crop_y = 80;
+  uint32_t crop_y = 95;
   uint32_t crop_w = 710;
-  uint32_t crop_h = 310; // 510 БАГ
+  uint32_t crop_h = 410; // 510 БАГ
   uint32_t src_width_bmp, src_height_bmp;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &src_width_bmp, &src_height_bmp);

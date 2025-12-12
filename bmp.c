@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+BITMAPFILEHEADER fh;
+BITMAPINFOHEADER ih;
+
 const uint16_t bytesPerPixel = 3;
 
 uint32_t stride_zeroes(const uint32_t width) {
@@ -18,9 +21,6 @@ unsigned char *load_bmp(const char *file_name,
         printf("Error: file not found\n");
         return NULL;
     }
-
-    BITMAPFILEHEADER fh;
-    BITMAPINFOHEADER ih;
 
     if (fread(&fh, sizeof(fh), 1, f) != 1) {
         printf("Error: read FILEHEADER\n");
@@ -99,24 +99,12 @@ int save_bmp(const char *file_name,
     uint32_t img_size  = stride * height;
     uint32_t file_size = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + img_size;
 
-    BITMAPFILEHEADER fh;
-    memset(&fh, 0, sizeof(fh));
-    fh.bfType = 0x4D42;
     fh.bfSize = file_size;
     fh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-    BITMAPINFOHEADER ih;
-    memset(&ih, 0, sizeof(ih));
     ih.biSize = sizeof(BITMAPINFOHEADER);
     ih.biWidth = (int32_t)width;
     ih.biHeight = (int32_t)height;
-    ih.biPlanes = 1;
-    ih.biBitCount = 24;
-    ih.biCompression = 0;
-    ih.biXPelsPerMeter = 0;
-    ih.biYPelsPerMeter = 0;
-    ih.biClrUsed = 0;
-    ih.biClrImportant  = 0;
     ih.biSizeImage = img_size;
 
     fwrite(&fh, sizeof(fh), 1, f);
@@ -199,7 +187,7 @@ unsigned char *rotate_bmp(unsigned char *src,
 
             uint32_t src_off = y_buf * src_stride + x * 3;
 
-            uint32_t y_top = srcHeight - 1 - y_buf; // UNUSED !!!!!!!!!!!!
+            //uint32_t y_top = srcHeight - 1 - y_buf; // UNUSED !!!!!!!!!!!!
 
             uint32_t new_x = y_buf;
             uint32_t new_y_top = x;

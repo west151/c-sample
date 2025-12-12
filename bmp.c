@@ -3,6 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+const uint16_t bytesPerPixel = 3;
+
+uint32_t stride_zeroes(const uint32_t width) {
+    return (width * bytesPerPixel + 3) & ~3u;
+}
+
 unsigned char *load_bmp(const char *file_name,
                         uint32_t *out_width,
                         uint32_t *out_height)
@@ -49,8 +55,7 @@ unsigned char *load_bmp(const char *file_name,
     uint32_t width  = (uint32_t)ih.biWidth;
     uint32_t height = (uint32_t)ih.biHeight;
 
-    uint32_t bytesPerPixel = 3;
-    uint32_t stride = (width * bytesPerPixel + 3) & ~3u;
+    uint32_t stride = stride_zeroes(width);
     uint32_t img_size = stride * height;
 
     if (fseek(f, (long)fh.bfOffBits, SEEK_SET) != 0) {
@@ -81,8 +86,8 @@ unsigned char *load_bmp(const char *file_name,
 }
 int save_bmp(const char *file_name,
              unsigned char *buffer,
-             uint32_t width,
-             uint32_t height)
+             const uint32_t width,
+             const uint32_t height)
 {
     FILE *f = fopen(file_name, "wb");
     if (!f) {
@@ -90,7 +95,7 @@ int save_bmp(const char *file_name,
         return -1;
     }
 
-    uint32_t stride  = (width * 3 + 3) & ~3u;
+    uint32_t stride  = stride_zeroes(width);
     uint32_t img_size  = stride * height;
     uint32_t file_size = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + img_size;
 
@@ -146,8 +151,8 @@ unsigned char *crop(unsigned char *src,
         return NULL;
     }
 
-    uint32_t src_stride = (srcWidth * 3 + 3) & ~3u;
-    uint32_t dst_stride = (cropWidth * 3 + 3) & ~3u;
+    uint32_t src_stride = stride_zeroes(srcWidth);
+    uint32_t dst_stride = stride_zeroes(cropWidth);
     uint32_t dst_size = dst_stride * cropHeight;
 
     unsigned char *dst = malloc(dst_size);
@@ -172,14 +177,14 @@ unsigned char *crop(unsigned char *src,
 }
 
 unsigned char *rotate_bmp(unsigned char *src,
-                          uint32_t srcWidth,
-                          uint32_t srcHeight)
+                          const uint32_t srcWidth,
+                          const uint32_t srcHeight)
 {
-    uint32_t src_stride = (srcWidth * 3 + 3) & ~3u;
+    uint32_t src_stride = stride_zeroes(srcWidth);
 
     uint32_t dstWidth  = srcHeight;
     uint32_t dstHeight = srcWidth;
-    uint32_t dst_stride = (dstWidth * 3 + 3) & ~3u;
+    uint32_t dst_stride = stride_zeroes(dstWidth);
     uint32_t dst_size  = dst_stride * dstHeight;
 
     unsigned char *dst = malloc(dst_size);
@@ -194,7 +199,7 @@ unsigned char *rotate_bmp(unsigned char *src,
 
             uint32_t src_off = y_buf * src_stride + x * 3;
 
-            uint32_t y_top = srcHeight - 1 - y_buf;
+            uint32_t y_top = srcHeight - 1 - y_buf; // UNUSED !!!!!!!!!!!!
 
             uint32_t new_x = y_buf;
             uint32_t new_y_top = x;

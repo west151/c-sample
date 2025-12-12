@@ -7,10 +7,10 @@ int main()
   char *in_file_name = "960px-Lenna.bmp";
   //char *in_file_name = "960px-Lenna-vert.bmp";  // Ширина: 724, Высота: 960
   char *out_file_name = "croup_lenna.bmp";
-  uint32_t crop_x = 0;
-  uint32_t crop_y = 0;
-  uint32_t crop_w = 510;
-  uint32_t crop_h = 510; // 510 БАГ
+  uint32_t crop_x = 50;
+  uint32_t crop_y = 80;
+  uint32_t crop_w = 710;
+  uint32_t crop_h = 310; // 510 БАГ
   uint32_t src_width_bmp, src_height_bmp;
 
   unsigned char *pixel_data = load_bmp(in_file_name, &src_width_bmp, &src_height_bmp);
@@ -25,7 +25,7 @@ int main()
     return -1;
   }
 
-  unsigned char *rotateBuffer = rotate(croppedBuffer, crop_w, crop_h);
+  unsigned char *rotateBuffer = rotate_bmp(croppedBuffer, crop_w, crop_h);
 
   if(!rotateBuffer) {
     free(croppedBuffer);
@@ -34,8 +34,8 @@ int main()
   }
 
   // после поворота меняем местами высоту и ширину
-  //int code = save_bmp(out_file_name, rotateBuffer, crop_h, crop_w);
-  int code = save_bmp(out_file_name, croppedBuffer, crop_w, crop_h);
+  int code = save_bmp(out_file_name, rotateBuffer, crop_h, crop_w);
+  //int code = save_bmp(out_file_name, croppedBuffer, crop_w, crop_h);
 
   free(pixel_data);
   free(croppedBuffer);
